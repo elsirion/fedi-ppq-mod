@@ -2,7 +2,7 @@
 const API_BASE = 'https://api.ppq.ai';
 const CHAT_MODEL = 'gpt-5.1-chat'; // Will fall back to available model if this doesn't exist
 const LOW_BALANCE_THRESHOLD = 0.05; // Trigger top-up below $0.05 (5 cents)
-const TOPUP_AMOUNT = 1.0; // Top up $1 USD
+const TOPUP_AMOUNT = 0.10; // Top up $0.10 USD (10 cents)
 
 class PPQApp {
     constructor() {
