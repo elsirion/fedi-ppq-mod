@@ -175,6 +175,11 @@ class PPQApp {
         });
 
         this.showChatView();
+
+        // Scroll to bottom after messages are rendered
+        setTimeout(() => {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 0);
     }
 
     saveCurrentConversation() {
