@@ -1,4 +1,4 @@
-# AI Assistant ⚡️
+# AI Assistant
 
 A simple, user-friendly frontend for [PPQ.ai](https://ppq.ai) that automatically manages your account balance and triggers WebLN payments when credits run low.
 

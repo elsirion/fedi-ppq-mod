@@ -14,6 +14,8 @@ class PPQApp {
         this.selectedModel = null;
         this.isProcessing = false;
         this.isTopping = false;
+        this.conversations = [];
+        this.currentConversationId = null;
 
         this.init();
     }
@@ -39,12 +41,20 @@ class PPQApp {
 
     setupEventListeners() {
         document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
-        document.getElementById('refresh-balance').addEventListener('click', () => this.checkBalance());
         document.getElementById('retry-btn').addEventListener('click', () => this.createAccount());
         document.getElementById('retry-topup-btn').addEventListener('click', () => this.initiateTopup());
+        document.getElementById('back-btn').addEventListener('click', () => this.showConversationsView());
+
+        const input = document.getElementById('message-input');
+
+        // Auto-resize textarea
+        input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        });
 
         // Allow Enter to send (Shift+Enter for new line)
-        document.getElementById('message-input').addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.sendMessage();
@@ -55,11 +65,116 @@ class PPQApp {
     loadCredentials() {
         this.apiKey = localStorage.getItem('ppq_api_key');
         this.creditId = localStorage.getItem('ppq_credit_id');
+        this.loadConversations();
     }
 
     saveCredentials() {
         localStorage.setItem('ppq_api_key', this.apiKey);
         localStorage.setItem('ppq_credit_id', this.creditId);
+    }
+
+    loadConversations() {
+        const stored = localStorage.getItem('ppq_conversations');
+        this.conversations = stored ? JSON.parse(stored) : [];
+
+        // Show conversations list view
+        this.showConversationsView();
+        this.renderConversationsList();
+    }
+
+    saveConversations() {
+        localStorage.setItem('ppq_conversations', JSON.stringify(this.conversations));
+    }
+
+    showConversationsView() {
+        document.getElementById('conversations-view').classList.remove('hidden');
+        document.getElementById('chat-screen').classList.add('hidden');
+        document.getElementById('back-btn').classList.add('hidden');
+        document.getElementById('header-title').textContent = 'AI Assistant';
+    }
+
+    showChatView() {
+        document.getElementById('conversations-view').classList.add('hidden');
+        document.getElementById('chat-screen').classList.remove('hidden');
+        document.getElementById('back-btn').classList.remove('hidden');
+    }
+
+    createNewConversation() {
+        const newConv = {
+            id: Date.now().toString(),
+            title: 'New conversation',
+            messages: [],
+            createdAt: Date.now()
+        };
+
+        this.conversations.unshift(newConv);
+        this.currentConversationId = newConv.id;
+        this.conversationHistory = [];
+
+        // Clear messages UI
+        document.getElementById('messages').innerHTML = '';
+
+        this.saveConversations();
+        this.showChatView();
+    }
+
+    loadConversation(id) {
+        const conv = this.conversations.find(c => c.id === id);
+        if (!conv) return;
+
+        this.currentConversationId = id;
+        this.conversationHistory = conv.messages;
+
+        // Update header title
+        document.getElementById('header-title').textContent = conv.title;
+
+        // Clear and render messages
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.innerHTML = '';
+
+        conv.messages.forEach(msg => {
+            this.addMessage(msg.role, msg.content, false);
+        });
+
+        this.showChatView();
+    }
+
+    saveCurrentConversation() {
+        const conv = this.conversations.find(c => c.id === this.currentConversationId);
+        if (!conv) return;
+
+        conv.messages = this.conversationHistory;
+
+        // Update title based on first user message
+        if (this.conversationHistory.length > 0 && conv.title === 'New conversation') {
+            const firstUserMsg = this.conversationHistory.find(m => m.role === 'user');
+            if (firstUserMsg) {
+                conv.title = firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
+                document.getElementById('header-title').textContent = conv.title;
+            }
+        }
+
+        this.saveConversations();
+    }
+
+    renderConversationsList() {
+        const list = document.getElementById('conversations-list');
+        list.innerHTML = '';
+
+        if (this.conversations.length === 0) {
+            return;
+        }
+
+        this.conversations.forEach(conv => {
+            const item = document.createElement('div');
+            item.className = 'conversation-item';
+            item.innerHTML = `
+                <div class="conversation-icon">💬</div>
+                <div class="conversation-title">${conv.title}</div>
+            `;
+            item.addEventListener('click', () => this.loadConversation(conv.id));
+            list.appendChild(item);
+        });
     }
 
     showSetupScreen() {
@@ -168,7 +283,7 @@ class PPQApp {
 
     async checkBalance() {
         const balanceDisplay = document.getElementById('balance-display');
-        balanceDisplay.textContent = 'Balance: Checking...';
+        balanceDisplay.textContent = '$...';
 
         try {
             const response = await fetch(`${API_BASE}/credits/balance`, {
@@ -186,7 +301,7 @@ class PPQApp {
             const data = await response.json();
             this.balance = parseFloat(data.balance) || 0;
 
-            balanceDisplay.textContent = `Balance: $${this.balance.toFixed(4)}`;
+            balanceDisplay.textContent = `$${this.balance.toFixed(2)}`;
 
             // Auto top-up if balance is low
             if (this.balance < LOW_BALANCE_THRESHOLD && !this.isTopping) {
@@ -194,7 +309,7 @@ class PPQApp {
             }
         } catch (error) {
             console.error('Balance check error:', error);
-            balanceDisplay.textContent = 'Balance: Error';
+            balanceDisplay.textContent = 'Error';
         }
     }
 
@@ -204,8 +319,14 @@ class PPQApp {
 
         if (!message || this.isProcessing) return;
 
+        // Create new conversation if starting from conversations view
+        if (!this.currentConversationId) {
+            this.createNewConversation();
+        }
+
         this.isProcessing = true;
         input.value = '';
+        input.style.height = 'auto';
         document.getElementById('send-btn').disabled = true;
 
         // Add user message to UI
@@ -270,7 +391,7 @@ class PPQApp {
         }
     }
 
-    addMessage(type, content) {
+    addMessage(type, content, shouldSave = true) {
         const messagesContainer = document.getElementById('messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
@@ -289,22 +410,21 @@ class PPQApp {
 
         // Scroll to bottom
         messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+
+        if (shouldSave) {
+            this.saveCurrentConversation();
+        }
     }
 
     async initiateTopup() {
         if (this.isTopping) return;
 
         this.isTopping = true;
-        this.showTopupBanner('Topping up $1 via Lightning...');
+        this.showTopupBanner('Creating Lightning invoice...');
 
         try {
-            // Check if WebLN is available
-            if (!window.webln) {
-                throw new Error('Add mini-app to Fedi Wallet');
-            }
-
             // Create Lightning invoice
-            const response = await fetch(`${API_BASE}/topup/create/lightning`, {
+            const response = await fetch(`${API_BASE}/topup/create/btc-lightning`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,
@@ -322,11 +442,18 @@ class PPQApp {
             }
 
             const data = await response.json();
-            const invoice = data.invoice || data.payment_request;
+            const invoice = data.lightning_invoice || data.invoice || data.payment_request;
             const invoiceId = data.invoice_id;
 
             if (!invoice) {
                 throw new Error('No invoice received');
+            }
+
+            // Check if WebLN is available
+            if (!window.webln) {
+                console.log('Lightning Invoice:', invoice);
+                console.log('Invoice ID:', invoiceId);
+                throw new Error('Add mini-app to Fedi Wallet');
             }
 
             this.showTopupBanner('Approve payment in wallet...');

@@ -1,13 +1,13 @@
-/* PPQ.ai Chat - Additional Styles */
+/* AI Assistant - Clean Chat Interface */
 
 body {
-    background: var(--color-extra-light-grey);
+    background: #f9f9f9;
     padding: 0;
     margin: 0;
 }
 
 .container {
-    max-width: 900px;
+    max-width: 800px;
     margin: 0 auto;
     background: var(--color-white);
     min-height: 100vh;
@@ -16,17 +16,25 @@ body {
 }
 
 header {
-    background: var(--color-primary);
-    color: var(--color-white);
+    background: var(--color-white);
+    color: var(--color-primary);
     padding: var(--spacing-lg);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: none;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
 }
 
 h1 {
     font-size: var(--font-size-h2);
     font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
 }
 
 .account-info {
@@ -36,20 +44,65 @@ h1 {
 }
 
 .balance {
-    background: rgba(255, 255, 255, 0.15);
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: 20px;
-    font-size: var(--font-size-caption);
-    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-primary);
 }
 
-header .btn {
-    color: var(--color-white);
-    border-color: rgba(255, 255, 255, 0.3);
+.conversations-view {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-xl);
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-header .btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+.conversations-header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.conversations-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.conversation-item {
+    padding: var(--spacing-lg);
+    background: var(--color-white);
+    border: 1px solid var(--color-light-grey);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.conversation-item:hover {
+    background: var(--color-extra-light-grey);
+    border-color: var(--color-grey);
+}
+
+.conversation-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-grey);
+}
+
+.conversation-title {
+    flex: 1;
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .setup-screen {
@@ -86,19 +139,20 @@ header .btn:hover {
 .chat-container {
     flex: 1;
     overflow-y: auto;
-    padding: var(--spacing-lg);
+    padding: var(--spacing-xl);
 }
 
 .messages {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xl);
+    max-width: 700px;
+    margin: 0 auto;
 }
 
 .message {
     display: flex;
     gap: var(--spacing-md);
-    max-width: 80%;
     animation: slideIn 0.3s ease-out;
 }
 
@@ -114,80 +168,94 @@ header .btn:hover {
 }
 
 .message.user {
-    align-self: flex-end;
     flex-direction: row-reverse;
 }
 
 .message-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-caption);
-    flex-shrink: 0;
-    background: var(--color-light-grey);
-    color: var(--color-white);
-}
-
-.message.user .message-avatar {
-    background: var(--color-primary);
-}
-
-.message.assistant .message-avatar {
-    background: var(--bg-holo-600);
-    color: var(--color-primary);
+    display: none;
 }
 
 .message-content {
-    background: var(--color-extra-light-grey);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: 18px;
-    line-height: 1.5;
+    flex: 1;
+    padding: var(--spacing-lg);
+    border-radius: 16px;
+    line-height: 1.6;
     color: var(--color-primary);
     font-size: var(--font-size-body);
+    background: transparent;
 }
 
 .message.user .message-content {
-    background: var(--color-primary);
-    color: var(--color-white);
+    background: rgba(2, 119, 242, 0.1);
+    color: var(--color-primary);
 }
 
 .message.assistant .message-content {
-    background: var(--color-extra-light-grey);
+    background: rgba(0, 168, 42, 0.1);
+    color: var(--color-primary);
 }
 
 .message.error .message-content {
-    background: rgba(224, 11, 0, 0.1);
+    background: rgba(224, 11, 0, 0.05);
     color: var(--color-red);
-    border: 1px solid var(--color-red);
+    border: 1px solid rgba(224, 11, 0, 0.2);
 }
 
 .input-area {
     padding: var(--spacing-lg);
-    border-top: 2px solid var(--color-light-grey);
+    border-top: none;
     display: flex;
     gap: var(--spacing-md);
     background: var(--color-white);
+    max-width: 700px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: flex-end;
 }
 
 #message-input {
     flex: 1;
-    padding: var(--spacing-md);
-    border: 2px solid var(--color-light-grey);
-    border-radius: 8px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 1px solid var(--color-light-grey);
+    border-radius: 24px;
     font-size: var(--font-size-body);
     font-family: var(--font-family-base);
     resize: none;
     transition: var(--transition-border);
-    min-height: var(--spacing-xxl);
+    min-height: 48px;
+    line-height: 1.5;
+    background: var(--color-extra-light-grey);
 }
 
 #message-input:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-light-grey);
+    background: var(--color-white);
+}
+
+#send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-blue);
+    flex-shrink: 0;
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-white);
+}
+
+#send-btn:hover {
+    background: var(--color-blue);
+    filter: brightness(1.1);
+}
+
+#send-btn:disabled {
+    opacity: 0.5;
 }
 
 .topup-banner {
