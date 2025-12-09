@@ -43,7 +43,6 @@ class PPQApp {
         document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
         document.getElementById('send-btn-list').addEventListener('click', () => this.sendMessageFromList());
         document.getElementById('retry-btn').addEventListener('click', () => this.createAccount());
-        document.getElementById('retry-topup-btn').addEventListener('click', () => this.initiateTopup());
         document.getElementById('back-btn').addEventListener('click', () => this.showConversationsView());
         document.getElementById('delete-btn').addEventListener('click', () => this.deleteCurrentConversation());
         document.getElementById('deposit-btn').addEventListener('click', () => this.initiateTopup());
@@ -244,11 +243,10 @@ class PPQApp {
     showTopupBanner(message, isError = false) {
         const banner = document.getElementById('topup-banner');
         const status = document.getElementById('topup-status');
-        const retryBtn = document.getElementById('retry-topup-btn');
 
         status.textContent = message;
-        status.className = isError ? 'status error' : 'status info';
-        retryBtn.classList.toggle('hidden', !isError);
+        status.className = isError ? 'text text--caption' : 'text text--caption';
+        status.style.color = isError ? 'var(--color-red)' : 'var(--color-primary)';
         banner.classList.remove('hidden');
     }
 
@@ -636,26 +634,42 @@ class PPQApp {
             this.showTopupBanner('Confirming payment...');
 
             // Poll for payment confirmation
-            await this.waitForTopupConfirmation(invoiceId);
+            try {
+                await this.waitForTopupConfirmation(invoiceId);
 
-            this.showTopupBanner('Top-up successful!');
+                this.showTopupBanner('Top-up successful!');
 
-            // Refresh balance
-            await this.checkBalance();
+                // Refresh balance
+                await this.checkBalance();
 
-            setTimeout(() => {
-                this.hideTopupBanner();
-                this.isTopping = false;
-            }, 2000);
+                setTimeout(() => {
+                    this.hideTopupBanner();
+                    this.isTopping = false;
+                }, 2000);
+            } catch (confirmError) {
+                console.error('Payment confirmation error:', confirmError);
+                // Payment may have succeeded but confirmation failed
+                // Refresh balance anyway
+                await this.checkBalance();
+                this.showTopupBanner('Payment sent. Balance updated.', false);
+                setTimeout(() => {
+                    this.hideTopupBanner();
+                    this.isTopping = false;
+                }, 3000);
+            }
 
         } catch (error) {
             console.error('Top-up error:', error);
             this.showTopupBanner(`Top-up failed: ${error.message}`, true);
-            this.isTopping = false;
+            setTimeout(() => {
+                this.hideTopupBanner();
+                this.isTopping = false;
+            }, 3000);
         }
     }
 
-    async waitForTopupConfirmation(invoiceId, maxAttempts = 30) {
+    async waitForTopupConfirmation(invoiceId, maxAttempts = 15) {
+        console.log('Waiting for payment confirmation...');
         for (let i = 0; i < maxAttempts; i++) {
             await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -668,7 +682,9 @@ class PPQApp {
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log(`Payment status check ${i + 1}/${maxAttempts}:`, data);
                     if (data.status === 'completed' || data.status === 'confirmed' || data.paid) {
+                        console.log('Payment confirmed!');
                         return true;
                     }
                 }
@@ -677,7 +693,8 @@ class PPQApp {
             }
         }
 
-        throw new Error('Payment confirmation timeout');
+        console.warn('Payment confirmation timeout - but payment may still have succeeded');
+        throw new Error('Confirmation timeout - check balance');
     }
 }
 
