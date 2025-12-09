@@ -77,6 +77,27 @@ body {
     gap: 2px;
 }
 
+.deposit-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--color-grey);
+    transition: color 0.15s ease;
+    flex-shrink: 0;
+}
+
+.deposit-icon-btn:hover {
+    color: var(--color-primary);
+}
+
+.deposit-icon-btn:active {
+    color: var(--color-dark-grey);
+}
+
 .conversations-body {
     display: flex;
     flex-direction: column;

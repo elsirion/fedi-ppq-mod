@@ -1,7 +1,7 @@
 // PPQ.ai Chat Application
 const API_BASE = 'https://api.ppq.ai';
 const CHAT_MODEL = 'gpt-5.1-chat'; // Will fall back to available model if this doesn't exist
-const LOW_BALANCE_THRESHOLD = 0.1; // Trigger top-up below $0.10
+const LOW_BALANCE_THRESHOLD = 0.05; // Trigger top-up below $0.05 (5 cents)
 const TOPUP_AMOUNT = 1.0; // Top up $1 USD
 
 class PPQApp {
@@ -46,6 +46,7 @@ class PPQApp {
         document.getElementById('retry-topup-btn').addEventListener('click', () => this.initiateTopup());
         document.getElementById('back-btn').addEventListener('click', () => this.showConversationsView());
         document.getElementById('delete-btn').addEventListener('click', () => this.deleteCurrentConversation());
+        document.getElementById('deposit-btn').addEventListener('click', () => this.initiateTopup());
 
         const input = document.getElementById('message-input');
         const inputList = document.getElementById('message-input-list');
