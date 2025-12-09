@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPQ.ai Chat</title>
+    <link rel="stylesheet" href="component-library/fedi-components.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PPQ.ai Chat</h1>
+            <div class="account-info">
+                <div id="balance-display" class="balance">Balance: Loading...</div>
+                <button id="refresh-balance" class="btn btn--tertiary btn--xs">Refresh</button>
+            </div>
+        </header>
+
+        <div id="setup-screen" class="setup-screen">
+            <div class="setup-card">
+                <h2 class="text text--h1">Welcome to PPQ.ai Chat</h2>
+                <p class="text text--body">Setting up your account...</p>
+                <p class="text text--caption">Your credentials will be saved locally in your browser.</p>
+                <div id="setup-status" class="status"></div>
+                <button id="retry-btn" class="btn btn--primary btn--md hidden">Retry</button>
+            </div>
+        </div>
+
+        <div id="chat-screen" class="chat-screen hidden">
+            <div id="chat-container" class="chat-container">
+                <div id="messages" class="messages"></div>
+            </div>
+
+            <div class="input-area">
+                <textarea
+                    id="message-input"
+                    placeholder="Type your message..."
+                    rows="3"
+                ></textarea>
+                <button id="send-btn" class="btn btn--primary btn--md">Send</button>
+            </div>
+        </div>
+
+        <div id="topup-banner" class="topup-banner hidden">
+            <div class="banner-content">
+                <div id="topup-status" class="text text--caption"></div>
+                <button id="retry-topup-btn" class="btn btn--primary btn--sm hidden">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
