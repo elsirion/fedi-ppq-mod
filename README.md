@@ -1,4 +1,4 @@
-# AI Assistant
+# AI Assistant ⚡️
 
 A simple, user-friendly frontend for [PPQ.ai](https://ppq.ai) that automatically manages your account balance and triggers WebLN payments when credits run low.
 
@@ -22,6 +22,18 @@ A simple, user-friendly frontend for [PPQ.ai](https://ppq.ai) that automatically
 2. Open `index.html` in your web browser
 
 That's it! No build process or server required.
+
+## Deployment
+
+This app automatically deploys to GitHub Pages when you push to the `main` branch.
+
+### Setup GitHub Pages:
+
+1. Go to your repository Settings > Pages
+2. Under "Build and deployment", select "GitHub Actions" as the source
+3. Push to `main` branch and the action will deploy automatically
+
+The app will be available at `https://<username>.github.io/<repo-name>/`
 
 ## Usage
 
