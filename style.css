@@ -50,7 +50,6 @@ body {
     flex-direction: column;
     gap: var(--spacing-sm);
     flex-grow: 1;
-    padding: var(--spacing-sm);
 }
 
 .conversations-header {
@@ -59,7 +58,6 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--color-extra-light-grey);
-    padding-bottom: var(--spacing-sm);
 }
 
 .header-top {
@@ -69,6 +67,7 @@ body {
     align-items: center;
     width: 100%;
     gap: var(--spacing-md);
+    padding: var(--spacing-sm);
 }
 
 .balance-section {
@@ -83,6 +82,7 @@ body {
     flex-direction: column;
     gap: var(--spacing-sm);
     flex-grow: 1;
+    padding: var(--spacing-sm);
 }
 
 .conversations-list {
