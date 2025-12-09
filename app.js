@@ -41,23 +41,27 @@ class PPQApp {
 
     setupEventListeners() {
         document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
+        document.getElementById('send-btn-list').addEventListener('click', () => this.sendMessageFromList());
         document.getElementById('retry-btn').addEventListener('click', () => this.createAccount());
         document.getElementById('retry-topup-btn').addEventListener('click', () => this.initiateTopup());
         document.getElementById('back-btn').addEventListener('click', () => this.showConversationsView());
+        document.getElementById('delete-btn').addEventListener('click', () => this.deleteCurrentConversation());
 
         const input = document.getElementById('message-input');
+        const inputList = document.getElementById('message-input-list');
 
-        // Auto-resize textarea
-        input.addEventListener('input', () => {
-            input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-        });
-
-        // Allow Enter to send (Shift+Enter for new line)
+        // Allow Enter to send
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
                 this.sendMessage();
+            }
+        });
+
+        inputList.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.sendMessageFromList();
             }
         });
     }
@@ -89,14 +93,15 @@ class PPQApp {
     showConversationsView() {
         document.getElementById('conversations-view').classList.remove('hidden');
         document.getElementById('chat-screen').classList.add('hidden');
-        document.getElementById('back-btn').classList.add('hidden');
-        document.getElementById('header-title').textContent = 'AI Assistant';
+        document.getElementById('setup-screen').classList.add('hidden');
+        this.currentConversationId = null;
+        this.renderConversationsList();
     }
 
     showChatView() {
         document.getElementById('conversations-view').classList.add('hidden');
         document.getElementById('chat-screen').classList.remove('hidden');
-        document.getElementById('back-btn').classList.remove('hidden');
+        document.getElementById('setup-screen').classList.add('hidden');
     }
 
     createNewConversation() {
@@ -114,8 +119,39 @@ class PPQApp {
         // Clear messages UI
         document.getElementById('messages').innerHTML = '';
 
+        // Update conversation title and balance
+        document.getElementById('conversation-title').textContent = newConv.title;
+        document.getElementById('chat-balance').textContent = this.balance ? `$${this.balance.toFixed(2)}` : '$0.00';
+
         this.saveConversations();
         this.showChatView();
+    }
+
+    deleteCurrentConversation() {
+        if (!this.currentConversationId) return;
+
+        const shouldDelete = confirm('Are you sure you want to delete this conversation?');
+        if (!shouldDelete) return;
+
+        this.conversations = this.conversations.filter(c => c.id !== this.currentConversationId);
+        this.saveConversations();
+        this.showConversationsView();
+    }
+
+    sendMessageFromList() {
+        const input = document.getElementById('message-input-list');
+        const message = input.value.trim();
+
+        if (!message || this.isProcessing) return;
+
+        // Create new conversation and switch to chat view
+        this.createNewConversation();
+
+        // Copy message to chat input and send
+        document.getElementById('message-input').value = message;
+        input.value = '';
+
+        this.sendMessage();
     }
 
     loadConversation(id) {
@@ -125,8 +161,9 @@ class PPQApp {
         this.currentConversationId = id;
         this.conversationHistory = conv.messages;
 
-        // Update header title
-        document.getElementById('header-title').textContent = conv.title;
+        // Update conversation title and balance
+        document.getElementById('conversation-title').textContent = conv.title;
+        document.getElementById('chat-balance').textContent = this.balance ? `$${this.balance.toFixed(2)}` : '$0.00';
 
         // Clear and render messages
         const messagesContainer = document.getElementById('messages');
@@ -150,7 +187,7 @@ class PPQApp {
             const firstUserMsg = this.conversationHistory.find(m => m.role === 'user');
             if (firstUserMsg) {
                 conv.title = firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
-                document.getElementById('header-title').textContent = conv.title;
+                document.getElementById('conversation-title').textContent = conv.title;
             }
         }
 
@@ -169,8 +206,12 @@ class PPQApp {
             const item = document.createElement('div');
             item.className = 'conversation-item';
             item.innerHTML = `
-                <div class="conversation-icon">💬</div>
-                <div class="conversation-title">${conv.title}</div>
+                <div class="conversation-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </div>
+                <div class="conversation-title text text--body">${conv.title}</div>
             `;
             item.addEventListener('click', () => this.loadConversation(conv.id));
             list.appendChild(item);
@@ -180,11 +221,13 @@ class PPQApp {
     showSetupScreen() {
         document.getElementById('setup-screen').classList.remove('hidden');
         document.getElementById('chat-screen').classList.add('hidden');
+        document.getElementById('conversations-view').classList.add('hidden');
     }
 
     showChatScreen() {
         document.getElementById('setup-screen').classList.add('hidden');
-        document.getElementById('chat-screen').classList.remove('hidden');
+        document.getElementById('conversations-view').classList.remove('hidden');
+        document.getElementById('chat-screen').classList.add('hidden');
     }
 
     showTopupBanner(message, isError = false) {
@@ -283,6 +326,7 @@ class PPQApp {
 
     async checkBalance() {
         const balanceDisplay = document.getElementById('balance-display');
+        const chatBalance = document.getElementById('chat-balance');
         balanceDisplay.textContent = '$...';
 
         try {
@@ -302,6 +346,9 @@ class PPQApp {
             this.balance = parseFloat(data.balance) || 0;
 
             balanceDisplay.textContent = `$${this.balance.toFixed(2)}`;
+            if (chatBalance) {
+                chatBalance.textContent = `$${this.balance.toFixed(2)}`;
+            }
 
             // Auto top-up if balance is low
             if (this.balance < LOW_BALANCE_THRESHOLD && !this.isTopping) {
@@ -396,20 +443,15 @@ class PPQApp {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
 
-        const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.textContent = type === 'user' ? 'U' : type === 'assistant' ? 'AI' : '!';
-
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         contentDiv.textContent = content;
 
-        messageDiv.appendChild(avatar);
         messageDiv.appendChild(contentDiv);
         messagesContainer.appendChild(messageDiv);
 
         // Scroll to bottom
-        messagesContainer.parentElement.scrollTop = messagesContainer.parentElement.scrollHeight;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         if (shouldSave) {
             this.saveCurrentConversation();

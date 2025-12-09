@@ -11,58 +11,100 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-left">
-                <button id="back-btn" class="btn btn--tertiary btn--sm hidden">←</button>
-                <h1 id="header-title">AI Assistant</h1>
-            </div>
-            <div class="account-info">
-                <div id="balance-display" class="balance">$...</div>
-            </div>
-        </header>
+    <div class="app-container">
+        <div class="container">
+            <!-- Conversations List View -->
+            <div id="conversations-view" class="conversations-view">
+                <div class="conversations-content">
+                    <div class="conversations-header">
+                        <div class="header-top">
+                            <div class="text text--caption" style="color: var(--color-grey);">Balance</div>
+                            <div id="balance-display" class="text text--body">$...</div>
+                        </div>
+                    </div>
 
-        <div id="conversations-view" class="conversations-view">
-            <div class="conversations-header">
-                <div class="text text--caption" style="color: var(--color-grey);">Jump back in</div>
+                    <div class="conversations-body">
+                        <div class="text text--weight-medium" style="color: var(--color-grey); margin-bottom: var(--spacing-sm);">Jump back in</div>
+                        <div class="conversations-list" id="conversations-list">
+                            <!-- Conversations will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-container-wrapper">
+                    <div class="input-area">
+                        <input
+                            id="message-input-list"
+                            type="text"
+                            class="chat-input"
+                            placeholder="Start a conversation..."
+                        />
+                        <button id="send-btn-list" class="send-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 19V5M5 12l7-7 7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="conversations-list" id="conversations-list">
-                <!-- Conversations will be loaded here -->
+
+            <!-- Setup Screen -->
+            <div id="setup-screen" class="setup-screen">
+                <div class="setup-card">
+                    <h2 class="text text--h1">AI Assistant</h2>
+                    <p class="text text--body">Setting up your account...</p>
+                    <p class="text text--caption" style="color: var(--color-grey);">Your credentials will be saved locally in your browser.</p>
+                    <div id="setup-status" class="status"></div>
+                    <button id="retry-btn" class="btn btn--primary btn--md hidden">Retry</button>
+                </div>
+            </div>
+
+            <!-- Chat Screen -->
+            <div id="chat-screen" class="chat-screen hidden">
+                <div class="chat-header">
+                    <button id="back-btn" class="icon-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <div id="conversation-title" class="text text--caption text--ellipsize" style="flex: 1;">Conversation</div>
+                    <div id="chat-balance" class="text text--caption" style="color: var(--color-grey);">0 Sats</div>
+                    <button id="delete-btn" class="icon-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="chat-container" class="chat-container">
+                    <div id="messages" class="messages"></div>
+                </div>
+
+                <div class="input-container-wrapper">
+                    <div class="input-area">
+                        <input
+                            id="message-input"
+                            type="text"
+                            class="chat-input"
+                            placeholder="Send a message..."
+                        />
+                        <button id="send-btn" class="send-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 19V5M5 12l7-7 7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top-up Banner -->
+            <div id="topup-banner" class="topup-banner hidden">
+                <div class="banner-content">
+                    <div id="topup-status" class="text text--caption"></div>
+                    <button id="retry-topup-btn" class="btn btn--primary btn--sm hidden">Retry</button>
+                </div>
             </div>
         </div>
-
-        <div id="setup-screen" class="setup-screen">
-            <div class="setup-card">
-                <h2 class="text text--h1">AI Assistant</h2>
-                <p class="text text--body">Setting up your account...</p>
-                <p class="text text--caption">Your credentials will be saved locally in your browser.</p>
-                <div id="setup-status" class="status"></div>
-                <button id="retry-btn" class="btn btn--primary btn--md hidden">Retry</button>
-            </div>
-        </div>
-
-        <div id="chat-screen" class="chat-screen hidden">
-            <div id="chat-container" class="chat-container">
-                <div id="messages" class="messages"></div>
-            </div>
-
-            <div class="input-area">
-                <textarea
-                    id="message-input"
-                    placeholder="Start a conversation..."
-                    rows="1"
-                ></textarea>
-                <button id="send-btn" class="btn btn--primary btn--md">↑</button>
-            </div>
-        </div>
-
-        <div id="topup-banner" class="topup-banner hidden">
-            <div class="banner-content">
-                <div id="topup-status" class="text text--caption"></div>
-                <button id="retry-topup-btn" class="btn btn--primary btn--sm hidden">Retry</button>
-            </div>
-        </div>
-
     </div>
 
     <script src="app.js"></script>
