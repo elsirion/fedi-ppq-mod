@@ -64,7 +64,17 @@ body {
 
 .header-top {
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: var(--spacing-md);
+}
+
+.balance-section {
+    display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 2px;
 }
 
