@@ -515,6 +515,50 @@ class PPQApp {
         }
     }
 
+    formatMessageContent(content) {
+        // Escape HTML to prevent XSS
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+
+        let formatted = escapeHtml(content);
+
+        // Convert markdown-style lists to HTML lists
+        // Handle bullet points (-, *, •)
+        formatted = formatted.replace(/^[\-\*\•]\s+(.+)$/gm, '<li>$1</li>');
+
+        // Handle numbered lists
+        formatted = formatted.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+        // Wrap consecutive list items in ul tags (remove newlines between li tags)
+        formatted = formatted.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
+            const cleanMatch = match.replace(/\n/g, '');
+            return '<ul>' + cleanMatch + '</ul>';
+        });
+
+        // Convert remaining line breaks to <br> tags (but not around ul tags)
+        formatted = formatted.replace(/\n/g, '<br>');
+
+        // Clean up any <br> tags immediately before or after ul tags
+        formatted = formatted.replace(/<br>\s*<ul>/g, '<ul>');
+        formatted = formatted.replace(/<\/ul>\s*<br>/g, '</ul>');
+
+        // Handle bold text **text** or __text__
+        formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+        // Handle italic text *text* or _text_
+        formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        formatted = formatted.replace(/_(.+?)_/g, '<em>$1</em>');
+
+        // Handle inline code `code`
+        formatted = formatted.replace(/`(.+?)`/g, '<code>$1</code>');
+
+        return formatted;
+    }
+
     addMessage(type, content, shouldSave = true) {
         const messagesContainer = document.getElementById('messages');
         const messageDiv = document.createElement('div');
@@ -522,7 +566,7 @@ class PPQApp {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.textContent = content;
+        contentDiv.innerHTML = this.formatMessageContent(content);
 
         messageDiv.appendChild(contentDiv);
         messagesContainer.appendChild(messageDiv);
