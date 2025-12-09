@@ -108,6 +108,7 @@ class PPQApp {
         const newConv = {
             id: Date.now().toString(),
             title: 'New conversation',
+            summary: '',
             messages: [],
             createdAt: Date.now()
         };
@@ -161,8 +162,8 @@ class PPQApp {
         this.currentConversationId = id;
         this.conversationHistory = conv.messages;
 
-        // Update conversation title and balance
-        document.getElementById('conversation-title').textContent = conv.title;
+        // Update conversation title and balance (prefer summary over title)
+        document.getElementById('conversation-title').textContent = conv.summary || conv.title;
         document.getElementById('chat-balance').textContent = this.balance ? `$${this.balance.toFixed(2)}` : '$0.00';
 
         // Clear and render messages
@@ -187,7 +188,8 @@ class PPQApp {
             const firstUserMsg = this.conversationHistory.find(m => m.role === 'user');
             if (firstUserMsg) {
                 conv.title = firstUserMsg.content.substring(0, 30) + (firstUserMsg.content.length > 30 ? '...' : '');
-                document.getElementById('conversation-title').textContent = conv.title;
+                // Display summary if available, otherwise title
+                document.getElementById('conversation-title').textContent = conv.summary || conv.title;
             }
         }
 
@@ -205,13 +207,16 @@ class PPQApp {
         this.conversations.forEach(conv => {
             const item = document.createElement('div');
             item.className = 'conversation-item';
+
+            const displayText = conv.summary || conv.title;
+
             item.innerHTML = `
                 <div class="conversation-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                 </div>
-                <div class="conversation-title text text--body">${conv.title}</div>
+                <div class="conversation-title text text--body">${displayText}</div>
             `;
             item.addEventListener('click', () => this.loadConversation(conv.id));
             list.appendChild(item);
@@ -360,6 +365,73 @@ class PPQApp {
         }
     }
 
+    async summarizeConversation() {
+        const conv = this.conversations.find(c => c.id === this.currentConversationId);
+        if (!conv || conv.messages.length < 2) return;
+
+        try {
+            // Create a prompt for summarization
+            const conversationText = conv.messages
+                .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+                .join('\n');
+
+            const requestBody = {
+                model: 'openai/gpt-4.1-mini',
+                messages: [
+                    {
+                        role: 'user',
+                        content: `Summarize the following conversation in one short sentence (max 60 characters). Be concise and capture the main topic:\n\n${conversationText}`
+                    }
+                ],
+                temperature: 0.3
+            };
+
+            console.log('📝 Summary Request:', {
+                model: requestBody.model,
+                conversationLength: conv.messages.length,
+                conversationText: conversationText,
+                fullRequest: requestBody
+            });
+
+            const response = await fetch(`${API_BASE}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                console.error('❌ Summarization failed:', response.status, await response.text());
+                return;
+            }
+
+            const data = await response.json();
+            console.log('✅ Summary Response:', data);
+
+            const summary = data.choices[0].message.content.trim();
+            console.log('📋 Generated Summary:', summary);
+
+            // Update conversation with summary
+            conv.summary = summary;
+
+            // Update title from summary if still "New conversation"
+            if (conv.title === 'New conversation') {
+                conv.title = summary.length > 40 ? summary.substring(0, 40) + '...' : summary;
+            }
+
+            // Update the displayed title to show summary
+            document.getElementById('conversation-title').textContent = conv.summary;
+
+            this.saveConversations();
+            this.renderConversationsList();
+
+        } catch (error) {
+            console.error('❌ Summarization error:', error);
+        }
+    }
+
     async sendMessage() {
         const input = document.getElementById('message-input');
         const message = input.value.trim();
@@ -373,17 +445,16 @@ class PPQApp {
 
         this.isProcessing = true;
         input.value = '';
-        input.style.height = 'auto';
         document.getElementById('send-btn').disabled = true;
 
-        // Add user message to UI
-        this.addMessage('user', message);
-
-        // Add to conversation history
+        // Add to conversation history FIRST
         this.conversationHistory.push({
             role: 'user',
             content: message
         });
+
+        // Then add user message to UI (with shouldSave=false to avoid duplicate save)
+        this.addMessage('user', message, false);
 
         try {
             const response = await fetch(`${API_BASE}/chat/completions`, {
@@ -405,7 +476,7 @@ class PPQApp {
                 // Check if it's a balance error
                 if (response.status === 402 || response.status === 429 ||
                     (errorData.error && errorData.error.includes('balance'))) {
-                    this.addMessage('error', 'Insufficient balance. Topping up...');
+                    this.addMessage('error', 'Insufficient balance. Topping up...', false);
                     await this.initiateTopup();
                     return;
                 }
@@ -416,21 +487,27 @@ class PPQApp {
             const data = await response.json();
             const assistantMessage = data.choices[0].message.content;
 
-            // Add assistant message to UI
-            this.addMessage('assistant', assistantMessage);
-
-            // Add to conversation history
+            // Add to conversation history FIRST
             this.conversationHistory.push({
                 role: 'assistant',
                 content: assistantMessage
             });
+
+            // Then add assistant message to UI (with shouldSave=false)
+            this.addMessage('assistant', assistantMessage, false);
+
+            // Save conversation with both messages
+            this.saveCurrentConversation();
+
+            // Generate summary in background
+            this.summarizeConversation();
 
             // Check balance after message
             this.checkBalance();
 
         } catch (error) {
             console.error('Send message error:', error);
-            this.addMessage('error', `Error: ${error.message}`);
+            this.addMessage('error', `Error: ${error.message}`, false);
         } finally {
             this.isProcessing = false;
             document.getElementById('send-btn').disabled = false;
