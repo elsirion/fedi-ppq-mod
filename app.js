@@ -76,7 +76,7 @@ class PPQApp {
                 // Calculate the keyboard height
                 const viewportHeight = window.visualViewport.height;
                 const windowHeight = window.innerHeight;
-                const keyboardHeight = windowHeight - viewportHeight;
+                const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
 
                 // Get all input container wrappers
                 const inputContainers = document.querySelectorAll('.input-container-wrapper');
@@ -93,6 +93,9 @@ class PPQApp {
                     });
                 }
             };
+
+            // Store listeners for potential cleanup
+            this.keyboardAdjustHandler = adjustForKeyboard;
 
             // Listen for viewport resize (keyboard show/hide)
             window.visualViewport.addEventListener('resize', adjustForKeyboard);
