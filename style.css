@@ -5,15 +5,12 @@
    BASE STYLES
    ============================================ */
 
-:root {
-    --viewport-height: 100vh;
-}
-
 body {
     background: var(--color-white);
     padding: 0;
     margin: 0;
-    min-height: var(--viewport-height, 100vh);
+    min-height: 100dvh;
+    min-height: 100vh; /* Fallback for browsers without dvh support */
     overflow-x: hidden;
 }
 
@@ -23,8 +20,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: var(--viewport-height, 100vh);
-    max-height: var(--viewport-height, 100vh);
+    min-height: 100dvh;
+    min-height: 100vh; /* Fallback for browsers without dvh support */
+    max-height: 100dvh;
+    max-height: 100vh; /* Fallback for browsers without dvh support */
     overflow: hidden;
 }
 
@@ -37,8 +36,10 @@ body {
     flex-grow: 1;
     width: 100%;
     max-width: 480px;
-    min-height: var(--viewport-height, 100vh);
-    max-height: var(--viewport-height, 100vh);
+    min-height: 100dvh;
+    min-height: 100vh; /* Fallback for browsers without dvh support */
+    max-height: 100dvh;
+    max-height: 100vh; /* Fallback for browsers without dvh support */
     overflow: hidden;
 }
 
