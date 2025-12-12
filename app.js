@@ -72,12 +72,11 @@ class PPQApp {
     setupKeyboardHandler() {
         // Estimate keyboard height and adjust input position
         const adjustForKeyboard = (keyboardVisible) => {
-            // Estimate keyboard height as 1/3rd of screen height
-            const keyboardHeight = keyboardVisible ? window.innerHeight / 3 : 0;
-            
             const inputContainers = document.querySelectorAll('.input-container-wrapper');
             
-            if (keyboardHeight > 0) {
+            if (keyboardVisible) {
+                // Estimate keyboard height as 1/3rd of screen height
+                const keyboardHeight = window.innerHeight / 3;
                 inputContainers.forEach(container => {
                     container.style.transform = `translateY(-${keyboardHeight}px)`;
                 });
