@@ -18,6 +18,26 @@ class PPQApp {
         this.currentConversationId = null;
 
         this.init();
+        this.setupMobileKeyboardHandling();
+    }
+
+    setupMobileKeyboardHandling() {
+        // Handle viewport changes when keyboard appears on mobile
+        if (window.visualViewport) {
+            const handleViewportResize = () => {
+                const viewport = window.visualViewport;
+                const viewportHeight = viewport.height;
+                
+                // Adjust the app container height to match visible viewport
+                document.documentElement.style.setProperty('--viewport-height', `${viewportHeight}px`);
+            };
+
+            window.visualViewport.addEventListener('resize', handleViewportResize);
+            window.visualViewport.addEventListener('scroll', handleViewportResize);
+            
+            // Initial setup
+            handleViewportResize();
+        }
     }
 
     async init() {
@@ -49,6 +69,17 @@ class PPQApp {
 
         const input = document.getElementById('message-input');
         const inputList = document.getElementById('message-input-list');
+
+        // Handle mobile keyboard showing - scroll input into view
+        const handleInputFocus = (inputElement) => {
+            // Small delay to ensure keyboard is showing
+            setTimeout(() => {
+                inputElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 300);
+        };
+
+        input.addEventListener('focus', () => handleInputFocus(input));
+        inputList.addEventListener('focus', () => handleInputFocus(inputList));
 
         // Allow Enter to send
         input.addEventListener('keydown', (e) => {
