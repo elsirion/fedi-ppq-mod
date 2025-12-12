@@ -72,6 +72,10 @@ class PPQApp {
     setupKeyboardHandler() {
         // Default keyboard offset for fallback (in pixels)
         const FALLBACK_KEYBOARD_OFFSET = 300;
+        // Wait time to let viewport API respond before applying fallback
+        const VIEWPORT_API_WAIT_MS = 300;
+        // Delay before resetting position after blur to avoid flicker
+        const BLUR_RESET_DELAY_MS = 100;
         
         // Track if viewport API is working
         this.usingFallbackKeyboard = false;
@@ -124,7 +128,7 @@ class PPQApp {
                             container.style.transform = `translateY(-${FALLBACK_KEYBOARD_OFFSET}px)`;
                         }
                     });
-                }, 300);
+                }, VIEWPORT_API_WAIT_MS);
             });
             
             inputElement.addEventListener('blur', () => {
@@ -136,7 +140,7 @@ class PPQApp {
                         inputContainers.forEach(container => {
                             container.style.transform = 'translateY(0)';
                         });
-                    }, 100);
+                    }, BLUR_RESET_DELAY_MS);
                 }
             });
         };
