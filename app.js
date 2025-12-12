@@ -64,6 +64,43 @@ class PPQApp {
                 this.sendMessageFromList();
             }
         });
+
+        // Handle keyboard appearance on mobile
+        this.setupKeyboardHandler();
+    }
+
+    setupKeyboardHandler() {
+        // Use Visual Viewport API to detect keyboard
+        if (window.visualViewport) {
+            const adjustForKeyboard = () => {
+                // Calculate the keyboard height
+                const viewportHeight = window.visualViewport.height;
+                const windowHeight = window.innerHeight;
+                const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
+
+                // Get all input container wrappers
+                const inputContainers = document.querySelectorAll('.input-container-wrapper');
+                
+                if (keyboardHeight > 0) {
+                    // Keyboard is visible - move input up
+                    inputContainers.forEach(container => {
+                        container.style.transform = `translateY(-${keyboardHeight}px)`;
+                    });
+                } else {
+                    // Keyboard is hidden - reset position
+                    inputContainers.forEach(container => {
+                        container.style.transform = 'translateY(0)';
+                    });
+                }
+            };
+
+            // Store listeners for potential cleanup
+            this.keyboardAdjustHandler = adjustForKeyboard;
+
+            // Listen for viewport resize (keyboard show/hide)
+            window.visualViewport.addEventListener('resize', adjustForKeyboard);
+            window.visualViewport.addEventListener('scroll', adjustForKeyboard);
+        }
     }
 
     loadCredentials() {
