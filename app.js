@@ -70,78 +70,48 @@ class PPQApp {
     }
 
     setupKeyboardHandler() {
-        // Default keyboard offset for fallback (in pixels)
-        const FALLBACK_KEYBOARD_OFFSET = 300;
-        // Wait time to let viewport API respond before applying fallback
-        const VIEWPORT_API_WAIT_MS = 300;
-        // Delay before resetting position after blur to avoid flicker
-        const BLUR_RESET_DELAY_MS = 100;
-        
-        // Track if viewport API is working
-        this.usingFallbackKeyboard = false;
-        
-        // Try Visual Viewport API first (works on most modern browsers)
+        // Estimate keyboard height and adjust input position
+        const adjustForKeyboard = () => {
+            // Calculate the keyboard height
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const windowHeight = window.innerHeight;
+            const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
+
+            // Get all input container wrappers
+            const inputContainers = document.querySelectorAll('.input-container-wrapper');
+            
+            if (keyboardHeight > 0) {
+                // Keyboard is visible - move input up
+                inputContainers.forEach(container => {
+                    container.style.transform = `translateY(-${keyboardHeight}px)`;
+                });
+            } else {
+                // Keyboard is hidden - reset position
+                inputContainers.forEach(container => {
+                    container.style.transform = 'translateY(0)';
+                });
+            }
+        };
+
+        // Store listeners for potential cleanup
+        this.keyboardAdjustHandler = adjustForKeyboard;
+
+        // Listen for viewport resize (keyboard show/hide)
         if (window.visualViewport) {
-            const adjustForKeyboard = () => {
-                // Calculate the keyboard height
-                const viewportHeight = window.visualViewport.height;
-                const windowHeight = window.innerHeight;
-                const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
-
-                // Get all input container wrappers
-                const inputContainers = document.querySelectorAll('.input-container-wrapper');
-                
-                if (keyboardHeight > 0) {
-                    // Keyboard is visible - move input up
-                    this.usingFallbackKeyboard = false;
-                    inputContainers.forEach(container => {
-                        container.style.transform = `translateY(-${keyboardHeight}px)`;
-                    });
-                } else if (!this.usingFallbackKeyboard) {
-                    // Keyboard is hidden - reset position (only if not using fallback)
-                    inputContainers.forEach(container => {
-                        container.style.transform = 'translateY(0)';
-                    });
-                }
-            };
-
-            // Store listeners for potential cleanup
-            this.keyboardAdjustHandler = adjustForKeyboard;
-
-            // Listen for viewport resize (keyboard show/hide)
             window.visualViewport.addEventListener('resize', adjustForKeyboard);
             window.visualViewport.addEventListener('scroll', adjustForKeyboard);
         }
         
-        // Fallback: Move input up when focused (for browsers where viewport doesn't change)
+        // Also trigger adjustment on input focus (for browsers where viewport doesn't fire resize events)
         const setupFocusHandler = (inputElement) => {
             inputElement.addEventListener('focus', () => {
-                // Give viewport API a chance to work first
-                setTimeout(() => {
-                    // Only apply fallback if viewport API hasn't moved the input
-                    const inputContainers = document.querySelectorAll('.input-container-wrapper');
-                    inputContainers.forEach(container => {
-                        const currentTransform = container.style.transform;
-                        // If no transform is applied, use fallback
-                        if (!currentTransform || currentTransform === 'translateY(0px)' || currentTransform === '') {
-                            this.usingFallbackKeyboard = true;
-                            container.style.transform = `translateY(-${FALLBACK_KEYBOARD_OFFSET}px)`;
-                        }
-                    });
-                }, VIEWPORT_API_WAIT_MS);
+                // Trigger keyboard adjustment when input is focused
+                adjustForKeyboard();
             });
             
             inputElement.addEventListener('blur', () => {
-                // Reset position when input loses focus (only if using fallback)
-                if (this.usingFallbackKeyboard) {
-                    setTimeout(() => {
-                        this.usingFallbackKeyboard = false;
-                        const inputContainers = document.querySelectorAll('.input-container-wrapper');
-                        inputContainers.forEach(container => {
-                            container.style.transform = 'translateY(0)';
-                        });
-                    }, BLUR_RESET_DELAY_MS);
-                }
+                // Reset position when input loses focus
+                adjustForKeyboard();
             });
         };
         
