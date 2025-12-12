@@ -70,7 +70,13 @@ class PPQApp {
     }
 
     setupKeyboardHandler() {
-        // Use Visual Viewport API to detect keyboard
+        // Default keyboard offset for fallback (in pixels)
+        const FALLBACK_KEYBOARD_OFFSET = 300;
+        
+        // Track if viewport API is working
+        this.usingFallbackKeyboard = false;
+        
+        // Try Visual Viewport API first (works on most modern browsers)
         if (window.visualViewport) {
             const adjustForKeyboard = () => {
                 // Calculate the keyboard height
@@ -83,11 +89,12 @@ class PPQApp {
                 
                 if (keyboardHeight > 0) {
                     // Keyboard is visible - move input up
+                    this.usingFallbackKeyboard = false;
                     inputContainers.forEach(container => {
                         container.style.transform = `translateY(-${keyboardHeight}px)`;
                     });
-                } else {
-                    // Keyboard is hidden - reset position
+                } else if (!this.usingFallbackKeyboard) {
+                    // Keyboard is hidden - reset position (only if not using fallback)
                     inputContainers.forEach(container => {
                         container.style.transform = 'translateY(0)';
                     });
@@ -101,6 +108,45 @@ class PPQApp {
             window.visualViewport.addEventListener('resize', adjustForKeyboard);
             window.visualViewport.addEventListener('scroll', adjustForKeyboard);
         }
+        
+        // Fallback: Move input up when focused (for browsers where viewport doesn't change)
+        const setupFocusHandler = (inputElement) => {
+            inputElement.addEventListener('focus', () => {
+                // Give viewport API a chance to work first
+                setTimeout(() => {
+                    // Only apply fallback if viewport API hasn't moved the input
+                    const inputContainers = document.querySelectorAll('.input-container-wrapper');
+                    inputContainers.forEach(container => {
+                        const currentTransform = container.style.transform;
+                        // If no transform is applied, use fallback
+                        if (!currentTransform || currentTransform === 'translateY(0px)' || currentTransform === '') {
+                            this.usingFallbackKeyboard = true;
+                            container.style.transform = `translateY(-${FALLBACK_KEYBOARD_OFFSET}px)`;
+                        }
+                    });
+                }, 300);
+            });
+            
+            inputElement.addEventListener('blur', () => {
+                // Reset position when input loses focus (only if using fallback)
+                if (this.usingFallbackKeyboard) {
+                    setTimeout(() => {
+                        this.usingFallbackKeyboard = false;
+                        const inputContainers = document.querySelectorAll('.input-container-wrapper');
+                        inputContainers.forEach(container => {
+                            container.style.transform = 'translateY(0)';
+                        });
+                    }, 100);
+                }
+            });
+        };
+        
+        // Apply focus handlers to all chat inputs
+        const messageInput = document.getElementById('message-input');
+        const messageInputList = document.getElementById('message-input-list');
+        
+        if (messageInput) setupFocusHandler(messageInput);
+        if (messageInputList) setupFocusHandler(messageInputList);
     }
 
     loadCredentials() {
