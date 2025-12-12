@@ -71,47 +71,29 @@ class PPQApp {
 
     setupKeyboardHandler() {
         // Estimate keyboard height and adjust input position
-        const adjustForKeyboard = () => {
-            // Calculate the keyboard height
-            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            const windowHeight = window.innerHeight;
-            const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
-
-            // Get all input container wrappers
+        const adjustForKeyboard = (keyboardVisible) => {
             const inputContainers = document.querySelectorAll('.input-container-wrapper');
             
-            if (keyboardHeight > 0) {
-                // Keyboard is visible - move input up
+            if (keyboardVisible) {
+                // Estimate keyboard height as 1/3rd of screen height
+                const keyboardHeight = window.innerHeight / 3;
                 inputContainers.forEach(container => {
                     container.style.transform = `translateY(-${keyboardHeight}px)`;
                 });
             } else {
-                // Keyboard is hidden - reset position
                 inputContainers.forEach(container => {
                     container.style.transform = 'translateY(0)';
                 });
             }
         };
-
-        // Store listeners for potential cleanup
-        this.keyboardAdjustHandler = adjustForKeyboard;
-
-        // Listen for viewport resize (keyboard show/hide)
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', adjustForKeyboard);
-            window.visualViewport.addEventListener('scroll', adjustForKeyboard);
-        }
         
-        // Also trigger adjustment on input focus (for browsers where viewport doesn't fire resize events)
         const setupFocusHandler = (inputElement) => {
             inputElement.addEventListener('focus', () => {
-                // Trigger keyboard adjustment when input is focused
-                adjustForKeyboard();
+                adjustForKeyboard(true);  // Keyboard is showing
             });
             
             inputElement.addEventListener('blur', () => {
-                // Reset position when input loses focus
-                adjustForKeyboard();
+                adjustForKeyboard(false);  // Keyboard is hidden
             });
         };
         
