@@ -33,7 +33,6 @@ class PPQApp {
             };
 
             window.visualViewport.addEventListener('resize', handleViewportResize);
-            window.visualViewport.addEventListener('scroll', handleViewportResize);
             
             // Initial setup
             handleViewportResize();
@@ -72,10 +71,10 @@ class PPQApp {
 
         // Handle mobile keyboard showing - scroll input into view
         const handleInputFocus = (inputElement) => {
-            // Small delay to ensure keyboard is showing
+            // Small delay to allow keyboard animation to start
             setTimeout(() => {
                 inputElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 300);
+            }, 150);
         };
 
         input.addEventListener('focus', () => handleInputFocus(input));
