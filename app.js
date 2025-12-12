@@ -70,37 +70,57 @@ class PPQApp {
     }
 
     setupKeyboardHandler() {
-        // Use Visual Viewport API to detect keyboard
+        // Estimate keyboard height and adjust input position
+        const adjustForKeyboard = () => {
+            // Calculate the keyboard height
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const windowHeight = window.innerHeight;
+            const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
+
+            // Get all input container wrappers
+            const inputContainers = document.querySelectorAll('.input-container-wrapper');
+            
+            if (keyboardHeight > 0) {
+                // Keyboard is visible - move input up
+                inputContainers.forEach(container => {
+                    container.style.transform = `translateY(-${keyboardHeight}px)`;
+                });
+            } else {
+                // Keyboard is hidden - reset position
+                inputContainers.forEach(container => {
+                    container.style.transform = 'translateY(0)';
+                });
+            }
+        };
+
+        // Store listeners for potential cleanup
+        this.keyboardAdjustHandler = adjustForKeyboard;
+
+        // Listen for viewport resize (keyboard show/hide)
         if (window.visualViewport) {
-            const adjustForKeyboard = () => {
-                // Calculate the keyboard height
-                const viewportHeight = window.visualViewport.height;
-                const windowHeight = window.innerHeight;
-                const keyboardHeight = Math.max(0, windowHeight - viewportHeight);
-
-                // Get all input container wrappers
-                const inputContainers = document.querySelectorAll('.input-container-wrapper');
-                
-                if (keyboardHeight > 0) {
-                    // Keyboard is visible - move input up
-                    inputContainers.forEach(container => {
-                        container.style.transform = `translateY(-${keyboardHeight}px)`;
-                    });
-                } else {
-                    // Keyboard is hidden - reset position
-                    inputContainers.forEach(container => {
-                        container.style.transform = 'translateY(0)';
-                    });
-                }
-            };
-
-            // Store listeners for potential cleanup
-            this.keyboardAdjustHandler = adjustForKeyboard;
-
-            // Listen for viewport resize (keyboard show/hide)
             window.visualViewport.addEventListener('resize', adjustForKeyboard);
             window.visualViewport.addEventListener('scroll', adjustForKeyboard);
         }
+        
+        // Also trigger adjustment on input focus (for browsers where viewport doesn't fire resize events)
+        const setupFocusHandler = (inputElement) => {
+            inputElement.addEventListener('focus', () => {
+                // Trigger keyboard adjustment when input is focused
+                adjustForKeyboard();
+            });
+            
+            inputElement.addEventListener('blur', () => {
+                // Reset position when input loses focus
+                adjustForKeyboard();
+            });
+        };
+        
+        // Apply focus handlers to all chat inputs
+        const messageInput = document.getElementById('message-input');
+        const messageInputList = document.getElementById('message-input-list');
+        
+        if (messageInput) setupFocusHandler(messageInput);
+        if (messageInputList) setupFocusHandler(messageInputList);
     }
 
     loadCredentials() {
